@@ -1,2 +1,2 @@
 # likebike_com
-Website for http://likebike.com/
+Source code of http://likebike.com/

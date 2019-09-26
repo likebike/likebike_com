@@ -53,6 +53,7 @@ a#logo img {
 }
 a#logo div.asciiLogo {
     display: inline-block;
+    text-align: left;
     white-space: pre;
     font-family: monospace;
     font-weight: 900;

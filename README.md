@@ -1,2 +1,2 @@
 # likebike_com
-Website for likebike.com
+Website for http://likebike.com/

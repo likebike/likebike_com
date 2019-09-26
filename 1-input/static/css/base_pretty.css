@@ -1,0 +1,142 @@
+/* Google Fonts is so good! */
+/* http://wordmark.it/ is also good for viewing fonts that are on your system. */
+/*
+@font-face {
+  font-family: 'Patua One';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Patua One'), local('PatuaOne-Regular'), url(Patua_One.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+*/
+@font-face {
+  font-family: 'Acme';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Acme'), local('Acme-Regular'), url(Acme.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+
+h1.pretty {
+    font-family: 'Acme', sans-serif;
+    font-weight: normal;
+}
+
+a {
+    color: #00e;
+    text-decoration: none;
+}
+a:visited {
+    color: #00e;
+}
+
+body {
+    width: 850px;
+    margin: auto;
+}
+section#header {
+    margin-top: 1em;
+    position: relative;
+    text-align: center;
+}
+section#header div.vspacer {
+    height: 155px;
+}
+section#header hr {
+    margin-bottom: 0;
+    border: 5px solid #e5e4de;
+}
+a#logo {
+}
+a#logo img {
+    margin-bottom: -23px;
+}
+a#logo div.asciiLogo {
+    display: inline-block;
+    white-space: pre;
+    font-family: monospace;
+    font-weight: 900;
+    font-size: 8px;
+    line-height: 1.2em;
+    vertical-align: middle;
+    color: #000;
+    margin-top: 50px;
+}
+a#logo div.asciiLogo.vcompressed {
+    line-height: 1.0em;
+    font-size: 25px;
+}
+a#logo div.name {
+    position: absolute;
+    top:  0px;
+    left: 90px;
+    color: #a3312d;
+    font-family: 'Acme', sans-serif;
+    font-weight: normal;
+    font-size: 72px;
+}
+a#logo div.name span.y {
+    font-size: 56px;
+}
+div#slogan {
+    color: #888;
+    font-size: 162%;
+    margin-top:50px;
+    margin-bottom:80px;
+}
+ul#headerTabs {
+    position: absolute;
+    top: 101px;  /* Line up tab text and slogan baselines. */
+    right: 30px;
+    margin: 0;
+}
+ul#headerTabs li {
+    list-style: none;
+    float: left;
+    margin-left: 0.5em;
+    font-size: 162%;
+    background-color: #777;
+    padding: 10px;
+    border: 1px solid #888;
+    border-radius: 10px;
+}
+ul#headerTabs li.selected {
+    /* background-color: #ff7700; /* Nice Orange */
+    background-color: #a3312d;
+}
+ul#headerTabs li a {
+    color: #e5e4de;
+    text-shadow: 0 0 5px #333;
+}
+ul#headerTabs li.selected a {
+    color: #fff;
+}
+section#content {
+    background-color: #fff;
+    padding-top: 3em;
+    padding-bottom: 3em;
+    padding-left: 2em;
+    padding-right: 2em;
+}
+section#footer {
+    margin-bottom: 3em;
+    text-align: center;
+    background-color: #e5e4de;
+    color: #a3312d;
+    border-radius: 0 0 10px 10px;
+}
+section#footer hr {
+    margin-top: 0;
+}
+
+div.clearFloats {
+    clear: both;
+}
+
+
+article.markdown-body {
+    font: 14px/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #444;
+}
+
+

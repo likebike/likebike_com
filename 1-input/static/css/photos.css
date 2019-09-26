@@ -1,0 +1,51 @@
+div#content {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+div#textStuff {
+    padding-left: 2em;
+    padding-right: 2em;
+}
+
+div#textStuff p.description {
+    padding-top: 1em;
+    font-size: 138%;
+    font-family: serif;
+}
+
+div#bigPhotoArea {
+    position: relative;
+}
+a.navLink {
+    display: block;
+    position: absolute;
+    top:-20px;
+    font-weight: bold;
+    font-size: 138%;
+}
+a#prev {
+    left:30px;
+}
+a#next {
+    right: 30px;
+}
+img#bigPhoto {
+    border: 1px solid #888;
+    border-radius: 10px;
+    margin-left: 3em;
+    height: 500px;
+}
+ul.thumbnails {
+    margin-top: 4em;
+}
+li.thumbnail {
+    float: left;
+    list-style: none;
+    width: 172px;
+    height: 110px;
+}
+li.thumbnail img {
+    border: 1px solid #888;
+    border-radius: 5px;
+}

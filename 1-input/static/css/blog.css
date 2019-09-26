@@ -1,0 +1,112 @@
+ul.posts {
+    margin: 0;
+}
+ul.posts li.post {
+    position: relative;
+    list-style: none;
+}
+ul.posts li.post-useSep {
+    border-top: 1px solid #888;
+    padding-top: 15px;
+    margin-top: 15px;
+}
+img.roundBorder {
+    border: 1px solid #888;
+    border-radius: 10px;
+}
+li.post img.postImg {
+    float:left;
+    margin-right: 1em;
+}
+li.post div.postTitle {
+    color: #000;
+    font-size: 162%;
+    font-weight: bold;
+}
+li.post div.postSummary {
+    color: #444;
+    margin-top: 0.5em;
+}
+li.post div.postMeta {
+    color: #888;
+    font-size: 85%;
+    margin-top: 1em;
+}
+
+h1.postTitle {
+    font-size: 262%;
+    margin: 0;
+    margin-bottom: 0.5em;
+    color: #333;  /* Be consistent with markdown CSS */
+}
+img.postMainImg {
+    margin: 2em 0;
+}
+
+hr.afterPost {
+    margin-top: 3em;
+    border-bottom: 12px solid #213554;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 7px;  /* 7 = 12/2 + 1 */
+}
+
+ul.exampleCode {
+    list-style: none;
+    padding-left: 0;
+    margin: 1em;
+    width: 50em;
+    /* Match github-markdown.css <pre>: */
+    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    line-height: 1.45;
+    font-size: 85%;
+}
+ul.exampleCode li.exampleCode,
+ul.exampleCode li.exampleOutput {
+    border: 1px solid #888;
+    padding: 16px;
+    border-radius: 5px;
+    margin-bottom: 1em;
+}
+ul.exampleCode li.exampleCode {
+    white-space: pre;
+    background-color: #f0f0f0;
+    color: #000;
+}
+ul.exampleCode li.exampleOutput {
+    white-space: pre;
+    background-color: #585858;
+    color: #fff;
+}
+ul.exampleCode li.exampleCode div.title,
+ul.exampleCode li.exampleOutput div.title {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1em;
+}
+ul.exampleCode li.exampleCode div.title {
+    background-color: #bcbcbc;
+}
+ul.exampleCode li.exampleOutput div.title {
+    background-color: #7d7d7d;
+}
+ul.exampleCode div.text {
+    word-wrap: normal;
+    overflow: auto;
+}
+
+
+
+table.exampleCode th {
+    background-color: #666;
+    color: #ddd;
+}
+table.exampleCode td {
+    white-space: pre;
+    vertical-align: top;
+    /* Match github-markdown.css <pre>: */
+    padding: 16px;
+    font: 12px Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    line-height: 1.45;
+    font-size: 85%;
+}

@@ -8,12 +8,18 @@
 
 <p>This is the personal website of <a href="http://resume.likebike.com/">Christopher Sebastian</a>.</p>
 
-## Topics:
-##
-## Code: God is a Programmer
-## Code: Applying Python's Coding Style to Go
-## Trading: Parameterless Technical Analysis
-## Trading: Currency Indexes
-## Trading: UVXY Synthetic Short
-## China: The Long Road Ahead
+<img src="${pyhpy.url('/static/img/caizi-boat-lowres.jpg')}" style="float:right;">
+
+<h1>Posts:</h1>
+<ul>
+  <li><a href="#coming-soon">Code: God is a Programmer.  Copy His Design Approach.</a></li>
+  <li><a href="#coming-soon">Code: Applying Python's Coding Style to Go</a></li>
+  <li><a href="#coming-soon">Trading: Parameterless Technical Analysis</a></li>
+  <li><a href="#coming-soon">Trading: Currency Indexes</a></li>
+  <li><a href="#coming-soon">Trading: UVXY Synthetic Short</a></li>
+  <li><a href="#coming-soon">Trading: I Figured It Out!  ...Now What?</a></li>
+  <li><a href="#coming-soon">Business: Specialization is Important</a></li>
+  <li><a href="#coming-soon">Business: How To Turn Currency Indexes Into A Business?</a></li>
+  <li><a href="#coming-soon">China: The Long Road Ahead</a></li>
+</ul>
 

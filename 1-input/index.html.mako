@@ -6,12 +6,13 @@
     <link rel="stylesheet" type="text/css" href="${pyhpy.url('/static/css/home.css')}">
 </%block>
 
-<p>This is the personal website of <a href="http://resume.likebike.com/">Christopher Sebastian</a>.</p>
-
 <img src="${pyhpy.url('/static/img/caizi-boat-lowres.jpg')}" style="float:right;">
+
+<p>This is the personal website of <a href="http://resume.likebike.com/">Christopher Sebastian</a>.</p>
 
 <h1>Posts:</h1>
 <ul>
+  <li><a href="/posts/how-to-write-fast-rust-code.html">Code: How To Write Fast Rust</a></li>
   <li><a href="#coming-soon">Code: God is a Programmer, and His Code is Open Source.  Copy His Design Approach!</a></li>
   <li><a href="#coming-soon">Code: Applying Python's Coding Style to Go</a></li>
   <li><a href="#coming-soon">Trading: Parameterless Technical Analysis</a></li>

@@ -1,0 +1,7 @@
+{
+  "template":"/_post.mako",
+  "summary":"This post needs a summary.",
+  "author" :"Christopher Sebastian",
+  "image"  :"/static/img/post-default.jpg",
+  "date"   :"2020"
+}

@@ -9,6 +9,8 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
 }
 */
+
+/*
 @font-face {
   font-family: 'Acme';
   font-style: normal;
@@ -21,13 +23,18 @@ h1.pretty {
     font-family: 'Acme', sans-serif;
     font-weight: normal;
 }
+*/
 
-a {
+.base_pretty a {
     color: #00e;
     text-decoration: none;
 }
-a:visited {
+.base_pretty a:visited {
     color: #00e;
+}
+
+html {
+    background:#888;
 }
 
 body {
@@ -72,7 +79,8 @@ a#logo div.name {
     top:  0px;
     left: 90px;
     color: #a3312d;
-    font-family: 'Acme', sans-serif;
+    /* font-family: 'Acme', sans-serif; */
+    font-family: sans-serif;
     font-weight: normal;
     font-size: 72px;
 }
@@ -135,9 +143,10 @@ div.clearFloats {
 }
 
 
+/*
 article.markdown-body {
     font: 14px/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif;
     color: #444;
 }
-
+*/
 

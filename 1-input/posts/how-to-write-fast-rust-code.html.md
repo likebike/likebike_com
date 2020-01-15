@@ -1,27 +1,42 @@
 = How To Write Fast Rust Code
 
-== <a id=the-journey href="#the-journey">The Journey from `eval` to `fasteval`</a>
+Author: [Christopher Sebastian](http://likebike.com/)  
+Date: 2020-01-14
 
-I did a line-for-line port my `eval` library from Go to Rust, and right away it was **5x** faster; I was pretty happy.  But when I tried to further improve performance using techniques from other languages, it got slower...  and the harder I tried, the slower it got!  Rust performance was *not* intuitive to me.
+=== Outline ===
+* <a href="#the-journey">The Journey from `eval` to `fasteval`</a>
+* <a href="#how-to-measure">Basic Skill #1: How To Take Noise-Free Measurements</a>
+* <a href="#how-to-perf">Basic Skill #2: How to Profile with `perf`</a>
+* <a href="#perf-tips">Performance Tip #1: Compile with `RUSTFLAGS="--emit=asm"`</a>
+* <a href="#hidden-costs">Performance Tip #2: Optimize the Critical Path</a>
+* <a href="#reduce-redundancy">Performance Tip #3: Reduce Redundant Work</a>
+* <a href="#comments">Comments</a>
+
+
+== <span id=the-journey>The Journey from `eval` to `fasteval`</span>
+
+I did a line-for-line port of my `eval` library from Go to Rust, and right away it was **5x** faster; I was pretty happy.  But when I tried to further improve performance using techniques from other languages, it got slower...  and the harder I tried, the slower it got!  Rust performance was *not* intuitive to me.
 
 Finally, after learning *why* my code was slow, I was able to boost performance **12000x**, and my library was worthy of a new name: [`fasteval`](https://github.com/likebike/fasteval).
 
 [![fasteval Performance](https://raw.githubusercontent.com/likebike/fasteval/master/benches/results/20191225/fasteval-compiled.png)](https://github.com/likebike/fasteval#performance-benchmarks)
 
-Here is a log chart showing `fasteval`'s performance compared to other similar libraries.  `fasteval` is represented by the little blue columns, and as you can see, it is *significantly* faster.
+Here is a log chart showing [fasteval](https://github.com/likebike/fasteval)'s performance compared to other similar libraries.  [fasteval](https://github.com/likebike/fasteval) is represented by the little blue columns, and as you can see, it is *significantly* faster.
 
 Rust performance makes sense to me now.  Here are the lessons I learned.
 
 
-== <a id=how-to-measure href="#how-to-measure">Basic Skill #1: How To Take Noise-Free Measurements</a>
+== <span id=how-to-measure>Basic Skill #1: How To Take Noise-Free Measurements</span>
+
+*ALWAYS USE A `release` BUILD WHEN YOU MEASURE.  Measurements from a non-release build will be very misleading.*
 
 The first step to improving performance is to measure, measure, measure... but these measurements will be affected by [many variables](https://easyperf.net/blog/2019/08/02/Perf-measurement-environment-on-Linux).  I try to eliminate three of them: Background Applications, Power Management, and Binary Layout.
 
-=== <a id=bg-apps href="#bg-apps">Background Applications</a>
+=== <span id=bg-apps>Background Applications</span>
 
 This one's easy: close all the background apps, *especially* web browsers which constantly consume cycles from all your CPU cores.
 
-=== <a id=power-mgt href="#power-mgt">CPU Power Management</a>
+=== <span id=power-mgt>CPU Power Management</span>
 
 Here is how I disable power-saving mode on Ubuntu 18.04:
 
@@ -29,7 +44,7 @@ Here is how I disable power-saving mode on Ubuntu 18.04:
 for F in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor; do echo performance >$F; done
 ```
 
-=== <a id=layout-rand href="#layout-rand">Layout Randomization</a>
+=== <span id=layout-rand>Layout Randomization</span>
 
 The compiler often makes poor decisions about the placement of your code within the binary, and your performance suffers.  To mitigate this, I use a Layout Randomization technique similar to [Coz](https://www.youtube.com/watch?v=r-TLSBdHe1A): during each iteration of my benchmark loop, I inject a random number of no-op instructions into my benchmark code (using `sed`).  This shifts everything around in the address space so that I end up hitting all fast and slow scenarios.  I then run the benchmark loop many times, until I no longer observe any performance improvements for 500 seconds.  At that point, I say that I have reached a stable point and can draw conclusions from the statistics.
 
@@ -54,7 +69,7 @@ macro_rules! memshift {
 }
 ```
 
-I then call `memshift!();` at the beginning of my benchmark functions.
+I then call `memshift!();` at the beginning of all benchmark functions.
 
 Here is my benchmark loop, which performs Layout Randomization:
 
@@ -95,11 +110,11 @@ cat bench.out | awk -v "now=$(date +%s)" '
 I use the 'minimum' times as my final result.  The 'mean' times help to verify that a 'minimum' is not overly-optimistic due to CPU branch prediction.  This approach is simple and is not affected by transient system background activity.  By following this process, my benchmark results are very consistent -- often equal-to-the-nanosecond!  This makes it very easy to know whether a change helps performance or not.
 
 
-== <a id=how-to-perf href="#how-to-perf">Basic Skill #2: How to Profile with `perf`</a>
+== <span id=how-to-perf>Basic Skill #2: How to Profile with `perf`</span>
 
 A profiler tells you where your performance bottlenecks are.  Here is a quick tutorial of how I profile with `perf` on Linux.  [*If you already know how to profile your code, you can skip to the Performance Tips section.*](#perf-tips)
 
-First, write a loop that performs the operation that you are trying to optimize.  The longer you run your loop, the better your statistics will be.  Here's an example of evaluating an expression with `fasteval`.  (If you are curious or confused about this code, [see the `fasteval` examples](https://docs.rs/fasteval/#examples).):
+First, write a loop that performs the operation that you are trying to measure.  The longer you run your loop, the better your statistics will be.  Here's an example of evaluating an expression with [fasteval](https://github.com/likebike/fasteval).  (If you are curious or confused about this code, [see the fasteval examples](https://docs.rs/fasteval/#examples).):
 ```rust
 fn main() -> Result<(), fasteval::Error> {
 	// 20 million iterations will be long enough for this example.
@@ -202,7 +217,7 @@ From the above report, I can see that much of the time is spent on memory operat
 * &nbsp;&nbsp;` 5.78%/ 5.78%  __memmove_sse2_unaligned_erms`
 * &nbsp;&nbsp;` 3.88%/ ?.??%  _int_free (inlined)`
 
-`fasteval` allows you to use a [`Slab`](https://docs.rs/fasteval/slab/index.html) -- a pre-allocated block of memory, which can eliminate most of the above memory operations and also allows us to save the parse results so we don't need to repeat the parse in the loop:
+[fasteval](https://github.com/likebike/fasteval) allows you to use a [`Slab`](https://docs.rs/fasteval/slab/index.html) -- a pre-allocated block of memory, which can eliminate most of the above memory operations and also allows us to save the parse results so we don't need to repeat the parse in the loop:
 
 ```rust
 use fasteval::Evaler;  // use this trait so we can call eval().
@@ -297,9 +312,9 @@ Samples: 258  of event 'cycles:ppp', Event count (approx.): 12442799113
 
 Let's focus on this line:
 
-* 91.56%/41.60% `<fasteval::parser::Expression as fasteval::evaler::Evaler>::eval`
+* `91.56%/41.60%  <fasteval::parser::Expression as fasteval::evaler::Evaler>::eval`
 
-As expected, most of the time is spent in `eval()` within the loop.  If you know that you will be evaluating an expression many times, you can tell `fasteval` to compile it into a more efficient form:
+As expected, most of the time is spent in `eval()` within the loop.  If you know that you will be evaluating an expression many times, you can tell [fasteval](https://github.com/likebike/fasteval) to compile it into a more efficient form:
 
 ```rust
 use fasteval::Evaler;    // use this trait so we can call eval().
@@ -334,7 +349,7 @@ sys     0m0.012s
 20 million iterations in under 50 milliseconds -- a **190x** improvement from where we started.  Not too bad!  Not too bad at all.
 
 
-== <a id=perf-tips href="#perf-tips">Performance Tip #1: Compile with `RUSTFLAGS="--emit=asm"`</a>
+== <span id=perf-tips>Performance Tip #1: Compile with `RUSTFLAGS="--emit=asm"`</span>
 
 I'm listing this tip first because it's so easy to do (it's just a compilation flag, not a code change), and it can result in a *surprising* performance boost.  By emitting assembly files during compilation, LLVM is able to perform much better optimizations (particularly Variable Localization).
 
@@ -391,56 +406,70 @@ $ RUSTFLAGS="--emit=asm" cargo bench
 test manual_localization_demo ... bench:     333,922 ns/iter (+/- 33,784)
 ```
 
-But for more complex situations, the compiler can usually do a better job than a person.  That's why I suggest that you always use `RUSTFLAGS="--emit=asm"` when you compile.
+But for more complex situations, the compiler can usually do a better job than a person.
+
+The benefits of `RUSTFLAGS="--emit=asm"` will vary, depending on your platform and code.  Sometimes it will help performance, and other times it will hurt performance.  You just need to try it and *measure* the results.
 
 
-== <a id=hidden-costs href="#hidden-costs">Performance Tip #2: Understand Hidden Costs</a>
+== <span id=hidden-costs>Performance Tip #2: Optimize the Critical Path</span>
 
-The reason Rust performance was so unintuitive to me as a beginner was because of all the hidden costs.  Many of the standard operations that you're used to from other lanugages actually do more work (safety checks and auto-conversions) in Rust, and of course nothing is free;  What you gain in safety or convenience is often paid for in performance.
+I'll say this again, since it's so important: *ALWAYS USE A `release` BUILD WHEN YOU MEASURE.  Measurements from a non-release build will be very misleading.*
 
-#### I am not able to find any real examples of panic costs.  I've tried everything.  It seems like my 'Fundamental Theorem of Rust Performance' is simply wrong, but fortunately it led me in the right direction anyway.
-## === <a id=panic-cost href="#panic-cost">The Indirect Cost of Panics</a>
-## 
-## Rust's panicky macros include: `panic!()`, `assert!()`, `todo!()`, `unimplemented!()`, `unreachable!()`, etc.
-## 
-## Other operations that can panic: Indexing, Slicing, Integer Arithmetic
-## 
-## If you benchmark them individually, Rust panics perform quite well.  In fact, they appear to be almost free:
-## 
-## ```rust
-## ```
-## 
-## ```bash
-## ```
-## 
-## ...But panics degrade the efficiency of higher-level operations.  In particular, they prevent the compiler from performing certain optimizations (such as vectorization and certain inlining), and they cannot be optimized away when doing function calls across crate boundaries:
-## 
-## ```rust
-## ```
-## 
-## ```bash
-## ```
-## 
-## If you want your code to operate with maximum performance, you need to avoid using panicky operations.
+After you use a profiler to determine the "hot spots" in your code, you can gain a minor performance boost by applying some manual optimizations:
 
-=== <a id=indexing-cost href="#indexing-cost">Indexing & Slicing</a>
-Bounds Checks
+* **inline `pub`:**  This is basic, but worth mentioning: If you want 'pub' functions to be inlinable across crates, you must mark them with `#[inline]`.
 
-=== <a id=inline-cost href="#inline-cost">Inlined functions still have overhead</a>
-Macros are free
+* **panics:**  The compiler usually does a good job of optimizing panicky code, but sometimes panics can bog down your performance.  Measure any code that can panic, and test out non-panicky alternatives.
 
-=== <a id=try-cost href="#try-cost">'?' performs conversions</a>
-Return values if you know what you have
+* **indexing:**  When you use the index operator (`a[i]`) on an array/slice/Vec/etc., bounds checks are performed, and a panic can be raised.  For most situations, `if let` **+** `get()` tends to outperform other indexing techniques (including the `unsafe` ones!) because it cannot panic and has excellent compiler optimization:
+
+        Original:
+            let v = a[i];
+            ...
+        
+        Usually Faster:
+            if let Some(v) = a.get(i) {
+                ...
+            }
 
 
 
-== <a id=reduce-redundancy href="#reduce-redundancy">Performance Tip #3: Reduce Memory Operations & Redundant Work</a>
+== <span id=reduce-redundancy>Performance Tip #3: Reduce Redundant Work</span>
 
-* Slab indexing side-steps borrow-checker but in a mostly-safe way.
-* Parsing redundancy
+* **Memory:**  Memory operations are very slow and should be avoided if possible.  Rust lifetimes and references help you to reduce memory operations by sharing data, rather than copying.  [fasteval](https://github.com/likebike/fasteval) also uses a [`Slab`](https://docs.rs/fasteval/slab/index.html) -- a pre-allocated block of memory -- so it only needs to perform one big allocation instead of many little allocations.  Also, the `Slab` can be re-used, so subsequent evaluations don't need to allocate *anything*.
+
+* **Logic:**  It is often possible to improve the efficiency of your logic so that you can accomplish the same goal while doing less work.  One example of this situation arises when parsing a string into an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).  The standard process goes something like this:
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 1: Use a "tokenizer" to split the string into a list of tokens.
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 2: Interpret the list of tokens to produce a list of AST nodes.
+
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 3: Discard the list of tokens.
+
+    This structure is nice because it enables separation of the "tokenization" and "interpretation" logic.  The down-side to this structure is the extra work that must be done at run-time: allocating and discarding the temporary token list, writing-and-reading the tokens to-and-from the list, and sharing the list between different parts of the program.  [fasteval](https://github.com/likebike/fasteval) uses a specialized parser that is able to generate an AST directly from a string, without using tokens.  This produces the same result with much less work.
+
+* **Data:**  When designing your data structures, try to make them *"infallible"* -- i.e. design them so that it is *impossible* to represent an invalid value.  If you know that a value will always be valid, you don't need to perform validity checks at runtime.
+
+    Here is an easy-to-understand example from [fasteval](https://github.com/likebike/fasteval): the AST node representing a `min(...)` variadic function call.  Example usage is `min(3, 2.25, x, -4)` or even `min(3)`, but `min()` with no args is not valid.  Originally, I designed the data structure like this:
+
+        struct MinFunc {
+            args: Vec<f64>,
+        }
+
+    ...but that structure is *fallible* -- args could be empty, and you can't take the minimum of nothing!  Even though a zero-arg `min()` call wouldn't make it past the 'parse' phase, I still had to do validity checks in the 'compile' and 'eval' code to defend against incorrect API usage.  The 'eval' phase is in the critical path, so these validity checks really add up and hurt performance.
+
+    I finally changed the data structure to this:
+
+        struct MinFunc {
+            first: f64,
+            rest : Vec<f64>,
+        }
+
+    This data structure is *infallible* -- it is impossible to create a value that represents a no-arg `min()` call because we are guaranteed to have at least a `first` value.  This allowed me to remove all of those validity checks, which improved performance *and* safety.
 
 
-== <a id=comments href="#comments">Comments</a>
+
+== <span id=comments>Comments</span>
 
 * [Comments on Reddit](https://www.reddit.com/r/algotrading/comments/ejbrju/how_many_of_you_are_using_a_topsecret_trading/)
 * [Comments on HackerNews](#todo)

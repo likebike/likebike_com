@@ -12,7 +12,7 @@
 
 <h1>Posts:</h1>
 <ul>
-  <li><a href="/posts/how-to-write-fast-rust-code.html">Code: How To Write Fast Rust</a></li>
+  <li><a href="/posts/how-to-write-fast-rust-code.html">Code: How To Write Fast Rust Code</a></li>
   <li><a href="#coming-soon">Code: God is a Programmer, and His Code is Open Source.  Copy His Design Approach!</a></li>
   <li><a href="#coming-soon">Code: Applying Python's Coding Style to Go</a></li>
   <li><a href="#coming-soon">Trading: Parameterless Technical Analysis</a></li>

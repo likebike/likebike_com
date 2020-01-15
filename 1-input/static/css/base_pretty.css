@@ -38,13 +38,15 @@ html {
 }
 
 body {
-    width: 850px;
+    width: 980px;
     margin: auto;
 }
 section#header {
     margin-top: 1em;
     position: relative;
     text-align: center;
+    background-color: #e5e4de;
+    border-radius: 10px 10px 0 0;
 }
 section#header div.vspacer {
     height: 155px;
@@ -54,6 +56,7 @@ section#header hr {
     border: 5px solid #e5e4de;
 }
 a#logo {
+    text-decoration: none;
 }
 a#logo img {
     margin-bottom: -23px;
@@ -124,8 +127,8 @@ section#content {
     background-color: #fff;
     padding-top: 3em;
     padding-bottom: 3em;
-    padding-left: 2em;
-    padding-right: 2em;
+    padding-left: 4em;
+    padding-right: 4em;
 }
 section#footer {
     margin-bottom: 3em;

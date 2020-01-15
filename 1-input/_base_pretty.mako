@@ -89,8 +89,8 @@
   -------  ___@
 -------   `\  L,
   ----  (*)/  (*)
-</%text></div></%block></a>
-      <%block name="LOGO_SLOGAN"><div id=slogan>Biking is Freedom</div></%block>
+</%text></div></%block>
+      <%block name="LOGO_SLOGAN"><div id=slogan>likebike.com</div></%block></a>
       ## <ul id=headerTabs>
       ##   <%block name="HEADER_TABS">
       ##   <li class=${'selected' if self.uri == '/index.html.mako' else 'unselected'}><a href="${pyhpy.url('/index.html', mtime=None)}"}><i class="fa fa-home"></i> Home</a></li>

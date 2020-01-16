@@ -98,14 +98,12 @@
       ##   <li class=${'selected' if self.uri.startswith('/blog') else 'unselected'}><a href="${pyhpy.url('/blog.html', mtime=None)}"}><i class="fa fa-newspaper-o"></i> Blog</a></li>
       ##   </%block>
       ## </ul>
-      <hr>
     </section>
     <section id=content>
       ## Render the inheriting template:
       ${next.body()}
     </section>
     <section id=footer>
-      <hr>
       🄯 2020
     </section>
   </body>

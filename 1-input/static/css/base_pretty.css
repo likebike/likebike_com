@@ -34,7 +34,7 @@ h1.pretty {
 }
 
 html {
-    background:#888;
+    background-color:#888080;
 }
 
 body {
@@ -45,15 +45,9 @@ section#header {
     margin-top: 1em;
     position: relative;
     text-align: center;
-    background-color: #e5e4de;
+    background-color: #e8e0e0;
     border-radius: 10px 10px 0 0;
-}
-section#header div.vspacer {
-    height: 155px;
-}
-section#header hr {
-    margin-bottom: 0;
-    border: 5px solid #e5e4de;
+    border-bottom: 1px solid #686060;
 }
 a#logo {
     text-decoration: none;
@@ -91,7 +85,7 @@ a#logo div.name span.y {
     font-size: 56px;
 }
 div#slogan {
-    color: #888;
+    color: #888080;
     font-size: 162%;
     margin-top:50px;
     margin-bottom:80px;
@@ -109,7 +103,7 @@ ul#headerTabs li {
     font-size: 162%;
     background-color: #777;
     padding: 10px;
-    border: 1px solid #888;
+    border: 1px solid #808080;
     border-radius: 10px;
 }
 ul#headerTabs li.selected {
@@ -124,7 +118,7 @@ ul#headerTabs li.selected a {
     color: #fff;
 }
 section#content {
-    background-color: #fff;
+    background-color: #ffffff;
     padding-top: 3em;
     padding-bottom: 3em;
     padding-left: 4em;
@@ -133,12 +127,12 @@ section#content {
 section#footer {
     margin-bottom: 3em;
     text-align: center;
-    background-color: #e5e4de;
-    color: #666;
+    background-color: #e8e0e0;
+    color: #686060;
     border-radius: 0 0 10px 10px;
-}
-section#footer hr {
-    margin-top: 0;
+    border-top: 1px solid #686060;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
 }
 
 div.clearFloats {

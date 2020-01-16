@@ -572,7 +572,7 @@
   font-weight: 600;
   line-height: 1.25;
   margin-bottom: 16px;
-  margin-top: 24px;
+  margin-top: 2em;  /* CHANGED BY CHRISTOPHER SEBASTIAN: 24px --> 2em */
 }
 
 .markdown-body h1 {
@@ -693,6 +693,7 @@
   font-size: 85%;
   margin: 0;
   padding: .2em .4em;
+  white-space: nowrap;      /* ADDED BY CHRISTOPHER SEBASTIAN */
 }
 
 .markdown-body pre {

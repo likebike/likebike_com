@@ -1,10 +1,16 @@
 <%inherit file="/_base_pretty.mako" />
-#### <% 
-####   assert self.uri.endswith('.html.mako'), 'Unexpected Extension: %r'%(self.uri,)
-####   date,mdFilename,meta,title,image = self.attr.postInfo(self.uri[:-5]+'.md')
-#### %>
-<%block name="TITLE">How to write fast Rust code</%block>
-<h1 class=postTitle>DOLLAR OPEN title CLOSE</h1>
-<div class=postMeta>Published <span class=postDate>DOLLAR OPEN date CLOSE</span>,&nbsp; by <span class=postAuthor>DOLLAR OPEN meta['author'] CLOSE</span></div>
-<img class="postMainImg roundBorder" src="DOLLAR OPEN image CLOSE" />
+<%!
+    import os, pyhpy
+    def postInfo(mdRelPath):
+        assert mdRelPath.startswith('/')  and  mdRelPath.endswith('.html.md'), 'Unexpected blog post filename: %r'%(mdRelPath,)
+        meta = pyhpy.meta(pyhpy.FS_ROOT()+mdRelPath)
+        title = os.path.split(mdRelPath)[1][:-8].replace('_', ' ')
+        return meta['date'], mdRelPath, meta, title, meta['image']
+%>
+<% 
+  assert self.uri.endswith('.html.mako'), 'Unexpected Extension: %r'%(self.uri,)
+  date,mdFilename,meta,title,image = self.attr.postInfo(self.uri[:-5]+'.md')
+%>
+## The block is evaluated before the above code, so that's why we can't use 'title' from above:
+<%block name="TITLE">${self.attr.postInfo(self.uri[:-5]+'.md')[3]}</%block>
 ${next.body()}

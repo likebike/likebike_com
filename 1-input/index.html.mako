@@ -12,9 +12,8 @@
 
 <h1>Posts:</h1>
 <ul>
-  <li><a href="/posts/how-to-write-fast-rust-code.html">Code: How To Write Fast Rust Code</a></li>
+  <li><a href="/posts/How_To_Write_Fast_Rust_Code.html">Code: How To Write Fast Rust Code</a></li>
   <li><a href="#coming-soon">Code: God is a Programmer, and His Code is Open Source.  Copy His Design Approach!</a></li>
-  <li><a href="#coming-soon">Code: Applying Python's Coding Style to Go</a></li>
   <li><a href="#coming-soon">Trading: Parameterless Technical Analysis</a></li>
   <li><a href="#coming-soon">Trading: Currency Indexes</a></li>
   <li><a href="#coming-soon">Trading: UVXY Synthetic Short</a></li>
@@ -22,5 +21,7 @@
   <li><a href="#coming-soon">Business: Specialization is Important</a></li>
   <li><a href="#coming-soon">Business: How To Turn Currency Indexes Into A Business?</a></li>
   <li><a href="#coming-soon">China: The Long Road Ahead</a></li>
+  <li><a href="#coming-soon">Math: The Beauty of Fractional Exponents</a></li>
+  <li><a href="#coming-soon">Math: Better Numbers</a></li>
 </ul>
 

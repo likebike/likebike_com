@@ -3,7 +3,7 @@
 Author: [Christopher Sebastian](http://likebike.com/)  
 Date: 2020-01-14
 
-=== Outline ===
+=== Contents ===
 * <a href="#the-journey">The Journey from `eval` to `fasteval`</a>
 * <a href="#how-to-measure">Basic Skill #1: How To Take Noise-Free Measurements</a>
 * <a href="#how-to-perf">Basic Skill #2: How to Profile with `perf`</a>
@@ -472,5 +472,5 @@ After you use a profiler to determine the "hot spots" in your code, you can gain
 == <span id=comments>Comments</span>
 
 * [Comments on Reddit](https://www.reddit.com/r/algotrading/comments/ejbrju/how_many_of_you_are_using_a_topsecret_trading/)
-* [Comments on HackerNews](#todo)
+##* [Comments on HackerNews](#todo)
 

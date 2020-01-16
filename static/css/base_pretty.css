@@ -9,6 +9,8 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
 }
 */
+
+/*
 @font-face {
   font-family: 'Acme';
   font-style: normal;
@@ -21,32 +23,34 @@ h1.pretty {
     font-family: 'Acme', sans-serif;
     font-weight: normal;
 }
+*/
 
-a {
+.base_pretty a {
     color: #00e;
     text-decoration: none;
 }
-a:visited {
+.base_pretty a:visited {
     color: #00e;
 }
 
+html {
+    background-color:#888080;
+}
+
 body {
-    width: 850px;
+    width: 980px;
     margin: auto;
 }
 section#header {
     margin-top: 1em;
     position: relative;
     text-align: center;
-}
-section#header div.vspacer {
-    height: 155px;
-}
-section#header hr {
-    margin-bottom: 0;
-    border: 5px solid #e5e4de;
+    background-color: #e8e0e0;
+    border-radius: 10px 10px 0 0;
+    border-bottom: 1px solid #686060;
 }
 a#logo {
+    text-decoration: none;
 }
 a#logo img {
     margin-bottom: -23px;
@@ -72,7 +76,8 @@ a#logo div.name {
     top:  0px;
     left: 90px;
     color: #a3312d;
-    font-family: 'Acme', sans-serif;
+    /* font-family: 'Acme', sans-serif; */
+    font-family: sans-serif;
     font-weight: normal;
     font-size: 72px;
 }
@@ -80,7 +85,7 @@ a#logo div.name span.y {
     font-size: 56px;
 }
 div#slogan {
-    color: #888;
+    color: #888080;
     font-size: 162%;
     margin-top:50px;
     margin-bottom:80px;
@@ -98,7 +103,7 @@ ul#headerTabs li {
     font-size: 162%;
     background-color: #777;
     padding: 10px;
-    border: 1px solid #888;
+    border: 1px solid #808080;
     border-radius: 10px;
 }
 ul#headerTabs li.selected {
@@ -113,21 +118,21 @@ ul#headerTabs li.selected a {
     color: #fff;
 }
 section#content {
-    background-color: #fff;
+    background-color: #ffffff;
     padding-top: 3em;
     padding-bottom: 3em;
-    padding-left: 2em;
-    padding-right: 2em;
+    padding-left: 4em;
+    padding-right: 4em;
 }
 section#footer {
     margin-bottom: 3em;
     text-align: center;
-    background-color: #e5e4de;
-    color: #666;
+    background-color: #e8e0e0;
+    color: #686060;
     border-radius: 0 0 10px 10px;
-}
-section#footer hr {
-    margin-top: 0;
+    border-top: 1px solid #686060;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
 }
 
 div.clearFloats {
@@ -135,9 +140,10 @@ div.clearFloats {
 }
 
 
+/*
 article.markdown-body {
     font: 14px/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif;
     color: #444;
 }
-
+*/
 

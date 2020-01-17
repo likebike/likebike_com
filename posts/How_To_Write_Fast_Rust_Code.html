@@ -343,7 +343,7 @@ user    0m0.037s
 sys     0m0.012s
 </code></pre>
 
-<p>20 million iterations in under 50 milliseconds -- a <strong>190x</strong> improvement from where we started.&nbsp; Not bad!</p>
+<p>20 million iterations in under 50 milliseconds -- a <strong>190x</strong> improvement from where we started.</p>
 <h2><span id=emit-asm>Performance Tip #1: Compile with <code>RUSTFLAGS="--emit=asm"</code></span></h2>
 <p>I'm listing this tip first because it's so easy to do (it's just a compilation flag, not a code change), and because it can result in a <em>surprising</em> performance boost.&nbsp; By emitting assembly files during compilation, LLVM is able to perform much better optimizations (particularly Variable Localization).</p>
 <p>Let's demonstrate this with an example:</p>

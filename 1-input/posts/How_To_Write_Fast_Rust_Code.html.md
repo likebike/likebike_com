@@ -473,6 +473,6 @@ After you use a profiler to determine the "hot spots" in your code, you can gain
 
 == <span id=comments>Comments</span>
 
-##* [Comments on Reddit](https://www.reddit.com/r/algotrading/comments/ejbrju/how_many_of_you_are_using_a_topsecret_trading/)
+* [Comments on Reddit](https://www.reddit.com/r/rust/comments/eq168d/how_to_write_fast_rust_code/)
 ##* [Comments on HackerNews](#todo)
 

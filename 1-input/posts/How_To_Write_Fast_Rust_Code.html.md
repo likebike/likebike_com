@@ -353,6 +353,8 @@ sys     0m0.012s
 
 == <span id=emit-asm>Performance Tip #1: Compile with `RUSTFLAGS="--emit=asm"`</span>
 
+***Update:** [/u/Zoxc32 explains why `--emit=asm` has this effect](https://www.reddit.com/r/rust/comments/eq168d/how_to_write_fast_rust_code/fena36s/):  "Emitting files will force the compiler to use a single LLVM module for the entire crate which allows LLVM to optimize better. You can achieve a similar effect by passing -C codegen-units=1. Putting all the crates into a single LLVM module with -C lto=fat can also improve performance. These are not defaults since they slow down compilation times."*
+
 I'm listing this tip first because it's so easy to do (it's just a compilation flag, not a code change), and because it can result in a *surprising* performance boost.  By emitting assembly files during compilation, LLVM is able to perform much better optimizations (particularly Variable Localization).
 
 Let's demonstrate this with an example:

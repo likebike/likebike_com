@@ -1,14 +1,14 @@
 = How To Write Fast Rust Code
 
 Author: [Christopher Sebastian](http://likebike.com/)  
-Date: 2020-01-14
+Date: 2020-01-17
 
 === Contents ===
 * <a href="#the-journey">The Journey from `eval` to `fasteval`</a>
 * <a href="#how-to-measure">Basic Skill #1: How To Take Noise-Free Measurements</a>
 * <a href="#how-to-perf">Basic Skill #2: How to Profile with `perf`</a>
-* <a href="#perf-tips">Performance Tip #1: Compile with `RUSTFLAGS="--emit=asm"`</a>
-* <a href="#hidden-costs">Performance Tip #2: Optimize the Critical Path</a>
+* <a href="#emit-asm">Performance Tip #1: Compile with `RUSTFLAGS="--emit=asm"`</a>
+* <a href="#opt-hot-path">Performance Tip #2: Optimize the Critical Path</a>
 * <a href="#reduce-redundancy">Performance Tip #3: Reduce Redundant Work</a>
 * <a href="#comments">Comments</a>
 
@@ -28,7 +28,7 @@ Rust performance makes sense to me now.  Here are the lessons I learned.
 
 == <span id=how-to-measure>Basic Skill #1: How To Take Noise-Free Measurements</span>
 
-*ALWAYS USE A `release` BUILD WHEN YOU MEASURE.  Measurements from a non-release build will be very misleading.*
+*ALWAYS PERFORM A `release` BUILD OF YOUR PROGRAM WHEN MEASURING PERFORMANCE.  Measurements from a non-release build will be very misleading.*
 
 The first step to improving performance is to measure, measure, measure... but these measurements will be affected by [many variables](https://easyperf.net/blog/2019/08/02/Perf-measurement-environment-on-Linux).  I try to eliminate three of them: Background Applications, Power Management, and Binary Layout.
 
@@ -46,7 +46,7 @@ for F in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor; do echo perfo
 
 === <span id=layout-rand>Layout Randomization</span>
 
-The compiler often makes poor decisions about the placement of your code within the binary, and your performance suffers.  To mitigate this, I use a Layout Randomization technique similar to [Coz](https://www.youtube.com/watch?v=r-TLSBdHe1A): during each iteration of my benchmark loop, I inject a random number of no-op instructions into my benchmark code (using `sed`).  This shifts everything around in the address space so that I end up hitting all fast and slow scenarios.  I then run the benchmark loop many times, until I no longer observe any performance improvements for 500 seconds.  At that point, I say that I have reached a stable point and can draw conclusions from the statistics.
+The compiler often makes poor decisions about the placement of your code within the binary, and your performance suffers.  To mitigate this, I use a Layout Randomization technique similar to [Coz](https://www.youtube.com/watch?v=r-TLSBdHe1A): during each iteration of my benchmark loop, I inject a random number of no-op instructions into my benchmark code (using `sed`).  This shifts everything around in the address space so that I end up hitting all fast and slow scenarios.  I then run the benchmark loop many times, until I no longer observe any performance improvements for 500 seconds.  (This usually takes around 15 minutes on my system.)  At that point, I say that I have reached a stable point and can draw conclusions from the statistics.
 
 I define this macro in my benchmark code:
 
@@ -112,7 +112,7 @@ I use the 'minimum' times as my final result.  The 'mean' times help to verify t
 
 == <span id=how-to-perf>Basic Skill #2: How to Profile with `perf`</span>
 
-A profiler tells you where your performance bottlenecks are.  Here is a quick tutorial of how I profile with `perf` on Linux.  [*If you already know how to profile your code, you can skip to the Performance Tips section.*](#perf-tips)
+A profiler tells you where your performance bottlenecks are.  Here is a quick tutorial of how I profile with `perf` on Linux.  [*If you already know how to profile your code, you can skip to the Performance Tips section.*](#emit-asm)
 
 First, write a loop that performs the operation that you are trying to measure.  The longer you run your loop, the better your statistics will be.  Here's an example of evaluating an expression with [fasteval](https://github.com/likebike/fasteval).  (If you are curious or confused about this code, [see the fasteval examples](https://docs.rs/fasteval/#examples).):
 ```rust
@@ -138,7 +138,7 @@ user    0m9.183s
 sys     0m0.004s
 ```
 
-It took a bit over 9 seconds to run 20 million iterations.  It's not bad, but we can do much better.  Let's use `perf` to see where most of the time is spent:
+It took a bit over 9 seconds to run 20 million iterations.  It's ok, but we can do much better.  Let's use `perf` to see where most of the time is spent:
 
 ```bash
 $ # Pre-Compile so compilation is not included in the profile:
@@ -217,7 +217,7 @@ From the above report, I can see that much of the time is spent on memory operat
 * &nbsp;&nbsp;` 5.78%/ 5.78%  __memmove_sse2_unaligned_erms`
 * &nbsp;&nbsp;` 3.88%/ ?.??%  _int_free (inlined)`
 
-[fasteval](https://github.com/likebike/fasteval) allows you to use a [`Slab`](https://docs.rs/fasteval/slab/index.html) -- a pre-allocated block of memory, which can eliminate most of the above memory operations and also allows us to save the parse results so we don't need to repeat the parse in the loop:
+[fasteval](https://github.com/likebike/fasteval) allows you to use a [`Slab`](https://docs.rs/fasteval/latest/fasteval/slab/index.html) -- a pre-allocated block of memory, which can eliminate most of the above memory operations and also allows us to save the parse results so we don't need to repeat the parse in the loop:
 
 ```rust
 use fasteval::Evaler;  // use this trait so we can call eval().
@@ -226,7 +226,8 @@ fn main() -> Result<(), fasteval::Error> {
     let mut slab = fasteval::Slab::new();
 
 	// Pre-parse the expression, placing it into `slab`:
-	let expr_ref = fasteval::parse("3^2 + 1", &mut slab.ps)?.from(&slab.ps);
+    let parser = fasteval::Parser::new();
+	let expr_ref = parser.parse("3^2 + 1", &mut slab.ps)?.from(&slab.ps);
 
     for _ in 0..20_000_000i64 {
         // Evaluate the pre-parsed expression:
@@ -324,7 +325,8 @@ fn main() -> Result<(), fasteval::Error> {
     let mut slab = fasteval::Slab::new();
 
     // Pre-parse and Compile the expression:
-    let compiled = fasteval::parse("3^2 + 1", &mut slab.ps)?.from(&slab.ps).compile(&slab.ps, &mut slab.cs);
+    let parser = fasteval::Parser::new();
+    let compiled = parser.parse("3^2 + 1", &mut slab.ps)?.from(&slab.ps).compile(&slab.ps, &mut slab.cs);
 
     for _ in 0..20_000_000i64 {
         // Evaluate the compiled expression:
@@ -346,12 +348,12 @@ user    0m0.037s
 sys     0m0.012s
 ```
 
-20 million iterations in under 50 milliseconds -- a **190x** improvement from where we started.  Not too bad!  Not too bad at all.
+20 million iterations in under 50 milliseconds -- a **190x** improvement from where we started.  Not bad!
 
 
-== <span id=perf-tips>Performance Tip #1: Compile with `RUSTFLAGS="--emit=asm"`</span>
+== <span id=emit-asm>Performance Tip #1: Compile with `RUSTFLAGS="--emit=asm"`</span>
 
-I'm listing this tip first because it's so easy to do (it's just a compilation flag, not a code change), and it can result in a *surprising* performance boost.  By emitting assembly files during compilation, LLVM is able to perform much better optimizations (particularly Variable Localization).
+I'm listing this tip first because it's so easy to do (it's just a compilation flag, not a code change), and because it can result in a *surprising* performance boost.  By emitting assembly files during compilation, LLVM is able to perform much better optimizations (particularly Variable Localization).
 
 Let's demonstrate this with an example:
 
@@ -411,9 +413,9 @@ But for more complex situations, the compiler can usually do a better job than a
 The benefits of `RUSTFLAGS="--emit=asm"` will vary, depending on your platform and code.  Sometimes it will help performance, and other times it will hurt performance.  You just need to try it and *measure* the results.
 
 
-== <span id=hidden-costs>Performance Tip #2: Optimize the Critical Path</span>
+== <span id=opt-hot-path>Performance Tip #2: Optimize the Critical Path</span>
 
-I'll say this again, since it's so important: *ALWAYS USE A `release` BUILD WHEN YOU MEASURE.  Measurements from a non-release build will be very misleading.*
+I'll say this again, since it's so important: *ALWAYS PERFORM A `release` BUILD OF YOUR PROGRAM WHEN MEASURING PERFORMANCE.  Measurements from a non-release build will be very misleading.*
 
 After you use a profiler to determine the "hot spots" in your code, you can gain a minor performance boost by applying some manual optimizations:
 
@@ -436,9 +438,9 @@ After you use a profiler to determine the "hot spots" in your code, you can gain
 
 == <span id=reduce-redundancy>Performance Tip #3: Reduce Redundant Work</span>
 
-* **Memory:**  Memory operations are very slow and should be avoided if possible.  Rust lifetimes and references help you to reduce memory operations by sharing data, rather than copying.  [fasteval](https://github.com/likebike/fasteval) also uses a [`Slab`](https://docs.rs/fasteval/slab/index.html) -- a pre-allocated block of memory -- so it only needs to perform one big allocation instead of many little allocations.  Also, the `Slab` can be re-used, so subsequent evaluations don't need to allocate *anything*.
+* **<span id=reduce-redundancy-mem>Memory:</span>**  Memory operations are very slow and should be avoided if possible.  Rust lifetimes and references help you to reduce memory operations by sharing data, rather than copying.  [fasteval](https://github.com/likebike/fasteval) also uses a [`Slab`](https://docs.rs/fasteval/latest/fasteval/slab/index.html) -- a pre-allocated block of memory -- so it only needs to perform one big allocation instead of many little allocations.  Also, the `Slab` can be re-used, so subsequent evaluations don't need to allocate *anything*.
 
-* **Logic:**  It is often possible to improve the efficiency of your logic so that you can accomplish the same goal while doing less work.  One example of this situation arises when parsing a string into an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).  The standard process goes something like this:
+* **<span id=reduce-redundancy-logic>Logic:</span>**  It is often possible to improve the efficiency of your logic so that you can accomplish the same goal while doing less work.  One example of this situation arises when parsing a string into an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).  The standard process goes something like this:
 
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 1: Use a "tokenizer" to split the string into a list of tokens.
 
@@ -446,9 +448,9 @@ After you use a profiler to determine the "hot spots" in your code, you can gain
 
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 3: Discard the list of tokens.
 
-    This structure is nice because it enables separation of the "tokenization" and "interpretation" logic.  The down-side to this structure is the extra work that must be done at run-time: allocating and discarding the temporary token list, writing-and-reading the tokens to-and-from the list, and sharing the list between different parts of the program.  [fasteval](https://github.com/likebike/fasteval) uses a specialized parser that is able to generate an AST directly from a string, without using tokens.  This produces the same result with much less work.
+    This structure is nice because it enables separation of the "tokenization" and "interpretation" logic.  The down-side to this structure is the extra work that must be done at run-time: allocating and discarding the temporary token list, writing-and-reading the tokens to-and-from the list, and sharing the list between different parts of the program.  [fasteval](https://github.com/likebike/fasteval) uses a specialized parser that is able to generate an AST directly from a string, without using tokens.  This produces the same result in less than half the time.
 
-* **Data:**  When designing your data structures, try to make them *"infallible"* -- i.e. design them so that it is *impossible* to represent an invalid value.  If you know that a value will always be valid, you don't need to perform validity checks at runtime.
+* **<span id=reduce-redundancy-data>Data:</span>**  When designing your data structures, try to make them *"infallible"* -- i.e. design them so that it is *impossible* to represent an invalid value.  If you know that a value will always be valid, you don't need to perform validity checks at runtime.
 
     Here is an easy-to-understand example from [fasteval](https://github.com/likebike/fasteval): the AST node representing a `min(...)` variadic function call.  Example usage is `min(3, 2.25, x, -4)` or even `min(3)`, but `min()` with no args is not valid.  Originally, I designed the data structure like this:
 
@@ -471,6 +473,6 @@ After you use a profiler to determine the "hot spots" in your code, you can gain
 
 == <span id=comments>Comments</span>
 
-* [Comments on Reddit](https://www.reddit.com/r/algotrading/comments/ejbrju/how_many_of_you_are_using_a_topsecret_trading/)
+##* [Comments on Reddit](https://www.reddit.com/r/algotrading/comments/ejbrju/how_many_of_you_are_using_a_topsecret_trading/)
 ##* [Comments on HackerNews](#todo)
 

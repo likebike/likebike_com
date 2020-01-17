@@ -39,14 +39,14 @@
 
 <article class="markdown-body"><h1>How To Write Fast Rust Code</h1>
 <p>Author: <a href="http://likebike.com/">Christopher Sebastian</a><br>
-Date: 2020-01-14</p>
+Date: 2020-01-17</p>
 <h3>Contents</h3>
 <ul>
 <li><a href="#the-journey">The Journey from <code>eval</code> to <code>fasteval</code></a></li>
 <li><a href="#how-to-measure">Basic Skill #1: How To Take Noise-Free Measurements</a></li>
 <li><a href="#how-to-perf">Basic Skill #2: How to Profile with <code>perf</code></a></li>
-<li><a href="#perf-tips">Performance Tip #1: Compile with <code>RUSTFLAGS="--emit=asm"</code></a></li>
-<li><a href="#hidden-costs">Performance Tip #2: Optimize the Critical Path</a></li>
+<li><a href="#emit-asm">Performance Tip #1: Compile with <code>RUSTFLAGS="--emit=asm"</code></a></li>
+<li><a href="#opt-hot-path">Performance Tip #2: Optimize the Critical Path</a></li>
 <li><a href="#reduce-redundancy">Performance Tip #3: Reduce Redundant Work</a></li>
 <li><a href="#comments">Comments</a></li>
 </ul>
@@ -57,7 +57,7 @@ Date: 2020-01-14</p>
 <p>Here is a log chart showing <a href="https://github.com/likebike/fasteval">fasteval</a>'s performance compared to other similar libraries.&nbsp; <a href="https://github.com/likebike/fasteval">fasteval</a> is represented by the little blue columns, and as you can see, it is <em>significantly</em> faster.</p>
 <p>Rust performance makes sense to me now.&nbsp; Here are the lessons I learned.</p>
 <h2><span id=how-to-measure>Basic Skill #1: How To Take Noise-Free Measurements</span></h2>
-<p><em>ALWAYS USE A <code>release</code> BUILD WHEN YOU MEASURE.&nbsp; Measurements from a non-release build will be very misleading.</em></p>
+<p><em>ALWAYS PERFORM A <code>release</code> BUILD OF YOUR PROGRAM WHEN MEASURING PERFORMANCE.&nbsp; Measurements from a non-release build will be very misleading.</em></p>
 <p>The first step to improving performance is to measure, measure, measure... but these measurements will be affected by <a href="https://easyperf.net/blog/2019/08/02/Perf-measurement-environment-on-Linux">many variables</a>.&nbsp; I try to eliminate three of them: Background Applications, Power Management, and Binary Layout.</p>
 <h3><span id=bg-apps>Background Applications</span></h3>
 <p>This one's easy: close all the background apps, <em>especially</em> web browsers which constantly consume cycles from all your CPU cores.</p>
@@ -67,7 +67,7 @@ Date: 2020-01-14</p>
 </code></pre>
 
 <h3><span id=layout-rand>Layout Randomization</span></h3>
-<p>The compiler often makes poor decisions about the placement of your code within the binary, and your performance suffers.&nbsp; To mitigate this, I use a Layout Randomization technique similar to <a href="https://www.youtube.com/watch?v=r-TLSBdHe1A">Coz</a>: during each iteration of my benchmark loop, I inject a random number of no-op instructions into my benchmark code (using <code>sed</code>).&nbsp; This shifts everything around in the address space so that I end up hitting all fast and slow scenarios.&nbsp; I then run the benchmark loop many times, until I no longer observe any performance improvements for 500 seconds.&nbsp; At that point, I say that I have reached a stable point and can draw conclusions from the statistics.</p>
+<p>The compiler often makes poor decisions about the placement of your code within the binary, and your performance suffers.&nbsp; To mitigate this, I use a Layout Randomization technique similar to <a href="https://www.youtube.com/watch?v=r-TLSBdHe1A">Coz</a>: during each iteration of my benchmark loop, I inject a random number of no-op instructions into my benchmark code (using <code>sed</code>).&nbsp; This shifts everything around in the address space so that I end up hitting all fast and slow scenarios.&nbsp; I then run the benchmark loop many times, until I no longer observe any performance improvements for 500 seconds.&nbsp; (This usually takes around 15 minutes on my system.)&nbsp; At that point, I say that I have reached a stable point and can draw conclusions from the statistics.</p>
 <p>I define this macro in my benchmark code:</p>
 <pre><code class="rust">#![feature(test)]
 extern crate test;
@@ -122,7 +122,7 @@ done &gt;bench.out
 
 <p>I use the 'minimum' times as my final result.&nbsp; The 'mean' times help to verify that a 'minimum' is not overly-optimistic due to CPU branch prediction.&nbsp; This approach is simple and is not affected by transient system background activity.&nbsp; By following this process, my benchmark results are very consistent -- often equal-to-the-nanosecond!&nbsp; This makes it very easy to know whether a change helps performance or not.</p>
 <h2><span id=how-to-perf>Basic Skill #2: How to Profile with <code>perf</code></span></h2>
-<p>A profiler tells you where your performance bottlenecks are.&nbsp; Here is a quick tutorial of how I profile with <code>perf</code> on Linux.&nbsp; <a href="#perf-tips"><em>If you already know how to profile your code, you can skip to the Performance Tips section.</em></a></p>
+<p>A profiler tells you where your performance bottlenecks are.&nbsp; Here is a quick tutorial of how I profile with <code>perf</code> on Linux.&nbsp; <a href="#emit-asm"><em>If you already know how to profile your code, you can skip to the Performance Tips section.</em></a></p>
 <p>First, write a loop that performs the operation that you are trying to measure.&nbsp; The longer you run your loop, the better your statistics will be.&nbsp; Here's an example of evaluating an expression with <a href="https://github.com/likebike/fasteval">fasteval</a>.&nbsp; (If you are curious or confused about this code, <a href="https://docs.rs/fasteval/#examples">see the fasteval examples</a>.):</p>
 <pre><code class="rust">fn main() -&gt; Result&lt;(), fasteval::Error&gt; {
     // 20 million iterations will be long enough for this example.
@@ -145,7 +145,7 @@ user    0m9.183s
 sys     0m0.004s
 </code></pre>
 
-<p>It took a bit over 9 seconds to run 20 million iterations.&nbsp; It's not bad, but we can do much better.&nbsp; Let's use <code>perf</code> to see where most of the time is spent:</p>
+<p>It took a bit over 9 seconds to run 20 million iterations.&nbsp; It's ok, but we can do much better.&nbsp; Let's use <code>perf</code> to see where most of the time is spent:</p>
 <pre><code class="bash">$ # Pre-Compile so compilation is not included in the profile:
 $ cargo build --release
 
@@ -222,14 +222,15 @@ Samples: 1K of event 'cycles:ppp', Event count (approx.): 49289530718
 <li>&nbsp;&nbsp;<code>5.78%/ 5.78%  __memmove_sse2_unaligned_erms</code></li>
 <li>&nbsp;&nbsp;<code>3.88%/ ?.??%  _int_free (inlined)</code></li>
 </ul>
-<p><a href="https://github.com/likebike/fasteval">fasteval</a> allows you to use a <a href="https://docs.rs/fasteval/slab/index.html"><code>Slab</code></a> -- a pre-allocated block of memory, which can eliminate most of the above memory operations and also allows us to save the parse results so we don't need to repeat the parse in the loop:</p>
+<p><a href="https://github.com/likebike/fasteval">fasteval</a> allows you to use a <a href="https://docs.rs/fasteval/latest/fasteval/slab/index.html"><code>Slab</code></a> -- a pre-allocated block of memory, which can eliminate most of the above memory operations and also allows us to save the parse results so we don't need to repeat the parse in the loop:</p>
 <pre><code class="rust">use fasteval::Evaler;  // use this trait so we can call eval().
 fn main() -&gt; Result&lt;(), fasteval::Error&gt; {
     // Allocate a block of memory:
     let mut slab = fasteval::Slab::new();
 
     // Pre-parse the expression, placing it into `slab`:
-    let expr_ref = fasteval::parse(&quot;3^2 + 1&quot;, &amp;mut slab.ps)?.from(&amp;slab.ps);
+    let parser = fasteval::Parser::new();
+    let expr_ref = parser.parse(&quot;3^2 + 1&quot;, &amp;mut slab.ps)?.from(&amp;slab.ps);
 
     for _ in 0..20_000_000i64 {
         // Evaluate the pre-parsed expression:
@@ -321,7 +322,8 @@ fn main() -&gt; Result&lt;(), fasteval::Error&gt; {
     let mut slab = fasteval::Slab::new();
 
     // Pre-parse and Compile the expression:
-    let compiled = fasteval::parse(&quot;3^2 + 1&quot;, &amp;mut slab.ps)?.from(&amp;slab.ps).compile(&amp;slab.ps, &amp;mut slab.cs);
+    let parser = fasteval::Parser::new();
+    let compiled = parser.parse(&quot;3^2 + 1&quot;, &amp;mut slab.ps)?.from(&amp;slab.ps).compile(&amp;slab.ps, &amp;mut slab.cs);
 
     for _ in 0..20_000_000i64 {
         // Evaluate the compiled expression:
@@ -341,9 +343,9 @@ user    0m0.037s
 sys     0m0.012s
 </code></pre>
 
-<p>20 million iterations in under 50 milliseconds -- a <strong>190x</strong> improvement from where we started.&nbsp; Not too bad!&nbsp; Not too bad at all.</p>
-<h2><span id=perf-tips>Performance Tip #1: Compile with <code>RUSTFLAGS="--emit=asm"</code></span></h2>
-<p>I'm listing this tip first because it's so easy to do (it's just a compilation flag, not a code change), and it can result in a <em>surprising</em> performance boost.&nbsp; By emitting assembly files during compilation, LLVM is able to perform much better optimizations (particularly Variable Localization).</p>
+<p>20 million iterations in under 50 milliseconds -- a <strong>190x</strong> improvement from where we started.&nbsp; Not bad!</p>
+<h2><span id=emit-asm>Performance Tip #1: Compile with <code>RUSTFLAGS="--emit=asm"</code></span></h2>
+<p>I'm listing this tip first because it's so easy to do (it's just a compilation flag, not a code change), and because it can result in a <em>surprising</em> performance boost.&nbsp; By emitting assembly files during compilation, LLVM is able to perform much better optimizations (particularly Variable Localization).</p>
 <p>Let's demonstrate this with an example:</p>
 <pre><code class="rust">#![feature(test)]
 extern crate test;
@@ -392,8 +394,8 @@ test manual_localization_demo ... bench:     333,922 ns/iter (+/- 33,784)
 
 <p>But for more complex situations, the compiler can usually do a better job than a person.</p>
 <p>The benefits of <code>RUSTFLAGS="--emit=asm"</code> will vary, depending on your platform and code.&nbsp; Sometimes it will help performance, and other times it will hurt performance.&nbsp; You just need to try it and <em>measure</em> the results.</p>
-<h2><span id=hidden-costs>Performance Tip #2: Optimize the Critical Path</span></h2>
-<p>I'll say this again, since it's so important: <em>ALWAYS USE A <code>release</code> BUILD WHEN YOU MEASURE.&nbsp; Measurements from a non-release build will be very misleading.</em></p>
+<h2><span id=opt-hot-path>Performance Tip #2: Optimize the Critical Path</span></h2>
+<p>I'll say this again, since it's so important: <em>ALWAYS PERFORM A <code>release</code> BUILD OF YOUR PROGRAM WHEN MEASURING PERFORMANCE.&nbsp; Measurements from a non-release build will be very misleading.</em></p>
 <p>After you use a profiler to determine the "hot spots" in your code, you can gain a minor performance boost by applying some manual optimizations:</p>
 <ul>
 <li>
@@ -418,17 +420,17 @@ Usually Faster:
 <h2><span id=reduce-redundancy>Performance Tip #3: Reduce Redundant Work</span></h2>
 <ul>
 <li>
-<p><strong>Memory:</strong>&nbsp; Memory operations are very slow and should be avoided if possible.&nbsp; Rust lifetimes and references help you to reduce memory operations by sharing data, rather than copying.&nbsp; <a href="https://github.com/likebike/fasteval">fasteval</a> also uses a <a href="https://docs.rs/fasteval/slab/index.html"><code>Slab</code></a> -- a pre-allocated block of memory -- so it only needs to perform one big allocation instead of many little allocations.&nbsp; Also, the <code>Slab</code> can be re-used, so subsequent evaluations don't need to allocate <em>anything</em>.</p>
+<p><strong><span id=reduce-redundancy-mem>Memory:</span></strong>&nbsp; Memory operations are very slow and should be avoided if possible.&nbsp; Rust lifetimes and references help you to reduce memory operations by sharing data, rather than copying.&nbsp; <a href="https://github.com/likebike/fasteval">fasteval</a> also uses a <a href="https://docs.rs/fasteval/latest/fasteval/slab/index.html"><code>Slab</code></a> -- a pre-allocated block of memory -- so it only needs to perform one big allocation instead of many little allocations.&nbsp; Also, the <code>Slab</code> can be re-used, so subsequent evaluations don't need to allocate <em>anything</em>.</p>
 </li>
 <li>
-<p><strong>Logic:</strong>&nbsp; It is often possible to improve the efficiency of your logic so that you can accomplish the same goal while doing less work.&nbsp; One example of this situation arises when parsing a string into an <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree">AST</a>.&nbsp; The standard process goes something like this:</p>
+<p><strong><span id=reduce-redundancy-logic>Logic:</span></strong>&nbsp; It is often possible to improve the efficiency of your logic so that you can accomplish the same goal while doing less work.&nbsp; One example of this situation arises when parsing a string into an <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree">AST</a>.&nbsp; The standard process goes something like this:</p>
 <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 1: Use a "tokenizer" to split the string into a list of tokens.</p>
 <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 2: Interpret the list of tokens to produce a list of AST nodes.</p>
 <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 3: Discard the list of tokens.</p>
-<p>This structure is nice because it enables separation of the "tokenization" and "interpretation" logic.&nbsp; The down-side to this structure is the extra work that must be done at run-time: allocating and discarding the temporary token list, writing-and-reading the tokens to-and-from the list, and sharing the list between different parts of the program.&nbsp; <a href="https://github.com/likebike/fasteval">fasteval</a> uses a specialized parser that is able to generate an AST directly from a string, without using tokens.&nbsp; This produces the same result with much less work.</p>
+<p>This structure is nice because it enables separation of the "tokenization" and "interpretation" logic.&nbsp; The down-side to this structure is the extra work that must be done at run-time: allocating and discarding the temporary token list, writing-and-reading the tokens to-and-from the list, and sharing the list between different parts of the program.&nbsp; <a href="https://github.com/likebike/fasteval">fasteval</a> uses a specialized parser that is able to generate an AST directly from a string, without using tokens.&nbsp; This produces the same result in less than half the time.</p>
 </li>
 <li>
-<p><strong>Data:</strong>&nbsp; When designing your data structures, try to make them <em>"infallible"</em> -- i.e. design them so that it is <em>impossible</em> to represent an invalid value.&nbsp; If you know that a value will always be valid, you don't need to perform validity checks at runtime.</p>
+<p><strong><span id=reduce-redundancy-data>Data:</span></strong>&nbsp; When designing your data structures, try to make them <em>"infallible"</em> -- i.e. design them so that it is <em>impossible</em> to represent an invalid value.&nbsp; If you know that a value will always be valid, you don't need to perform validity checks at runtime.</p>
 <p>Here is an easy-to-understand example from <a href="https://github.com/likebike/fasteval">fasteval</a>: the AST node representing a <code>min(...)</code> variadic function call.&nbsp; Example usage is <code>min(3, 2.25, x, -4)</code> or even <code>min(3)</code>, but <code>min()</code> with no args is not valid.&nbsp; Originally, I designed the data structure like this:</p>
 <pre><code>struct MinFunc {
     args: Vec&lt;f64&gt;,
@@ -444,10 +446,7 @@ Usually Faster:
 <p>This data structure is <em>infallible</em> -- it is impossible to create a value that represents a no-arg <code>min()</code> call because we are guaranteed to have at least a <code>first</code> value.&nbsp; This allowed me to remove all of those validity checks, which improved performance <em>and</em> safety.</p>
 </li>
 </ul>
-<h2><span id=comments>Comments</span></h2>
-<ul>
-<li><a href="https://www.reddit.com/r/algotrading/comments/ejbrju/how_many_of_you_are_using_a_topsecret_trading/">Comments on Reddit</a></li>
-</ul></article>
+<h2><span id=comments>Comments</span></h2></article>
 
     </section>
     <section id=footer>

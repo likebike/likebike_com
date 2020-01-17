@@ -348,7 +348,7 @@ user    0m0.037s
 sys     0m0.012s
 ```
 
-20 million iterations in under 50 milliseconds -- a **190x** improvement from where we started.  Not bad!
+20 million iterations in under 50 milliseconds -- a **190x** improvement from where we started.
 
 
 == <span id=emit-asm>Performance Tip #1: Compile with `RUSTFLAGS="--emit=asm"`</span>
